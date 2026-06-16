@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { authRouter } from './auth/auth.routes';
+import { investmentRouter } from './investments/investment.routes';
 import { AppDataSource } from './data-source';
 
 export function createApp() {
@@ -26,6 +27,8 @@ export function createApp() {
   });
 
   app.use('/api/auth', authRouter);
+
+  app.use('/api/investments', investmentRouter);
 
   return app;
 }

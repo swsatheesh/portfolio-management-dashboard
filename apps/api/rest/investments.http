@@ -1,0 +1,62 @@
+@baseUrl=http://localhost:3000
+
+### Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "password123"
+}
+
+###
+
+@token={{login.response.body.accessToken}}
+
+### List Investments
+GET {{baseUrl}}/api/investments
+Authorization: Bearer {{token}}
+
+###
+
+### Create Investment
+# @name createInvestment
+POST {{baseUrl}}/api/investments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Apple Inc.",
+  "symbol": "aapl",
+  "assetType": "STOCK",
+  "quantity": 10,
+  "purchasePrice": 150,
+  "currentPrice": 195
+}
+
+###
+
+@investmentId={{createInvestment.response.body.id}}
+
+### Get Investment By ID
+GET {{baseUrl}}/api/investments/{{investmentId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Update Investment
+PATCH {{baseUrl}}/api/investments/{{investmentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 12,
+  "currentPrice": 200
+}
+
+###
+
+### Delete Investment
+DELETE {{baseUrl}}/api/investments/{{investmentId}}
+Authorization: Bearer {{token}}
