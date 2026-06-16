@@ -1,0 +1,105 @@
+@baseUrl=http://localhost:3000
+
+### Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "password123"
+}
+
+###
+
+@token={{login.response.body.accessToken}}
+
+### Create Investment For Transaction Testing
+# @name createInvestment
+POST {{baseUrl}}/api/investments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Apple Inc.",
+  "symbol": "AAPL",
+  "assetType": "STOCK",
+  "quantity": 10,
+  "purchasePrice": 150,
+  "currentPrice": 195
+}
+
+###
+
+@investmentId={{createInvestment.response.body.id}}
+
+### Create BUY Transaction
+# @name createBuyTransaction
+POST {{baseUrl}}/api/transactions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "investmentId": "{{investmentId}}",
+  "type": "BUY",
+  "quantity": 10,
+  "price": 150,
+  "transactionDate": "2026-06-16T00:00:00.000Z"
+}
+
+###
+
+@buyTransactionId={{createBuyTransaction.response.body.id}}
+
+### Create SELL Transaction
+# @name createSellTransaction
+POST {{baseUrl}}/api/transactions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "investmentId": "{{investmentId}}",
+  "type": "SELL",
+  "quantity": 2,
+  "price": 200,
+  "transactionDate": "2026-06-17T00:00:00.000Z"
+}
+
+###
+
+@transactionId={{createSellTransaction.response.body.id}}
+
+### List Transactions
+GET {{baseUrl}}/api/transactions
+Authorization: Bearer {{token}}
+
+###
+
+### Get Transaction By ID
+GET {{baseUrl}}/api/transactions/{{transactionId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Update Transaction
+PATCH {{baseUrl}}/api/transactions/{{transactionId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 3,
+  "price": 205,
+  "transactionDate": "2026-06-18T00:00:00.000Z"
+}
+
+###
+
+### Delete Transaction
+DELETE {{baseUrl}}/api/transactions/{{transactionId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Confirm Transactions After Delete
+GET {{baseUrl}}/api/transactions
+Authorization: Bearer {{token}}
