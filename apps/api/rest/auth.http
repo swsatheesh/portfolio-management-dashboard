@@ -1,3 +1,9 @@
+### Base URL
+
+@baseUrl=http://localhost:3000
+
+###
+
 ### Health Check
 GET http://localhost:3000/health
 
@@ -21,8 +27,33 @@ Content-Type: application/json
 
 ###
 
+### Token
+
 @token={{login.response.body.accessToken}}
+
+###
 
 ### Profile
 GET http://localhost:3000/api/auth/profile
 Authorization: Bearer {{token}}
+
+###
+
+### Invalid Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "wrong-password"
+}
+
+###
+
+### Missing Password
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com"
+}
