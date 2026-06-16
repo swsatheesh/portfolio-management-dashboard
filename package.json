@@ -1,0 +1,18 @@
+{
+  "name": "portfolio-management-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Portfolio Management Dashboard assessment scaffold",
+  "scripts": {
+    "dev": "docker compose -f docker-compose.dev.yml up --build",
+    "dev:down": "docker compose -f docker-compose.dev.yml down",
+    "test": "docker compose -f docker-compose.dev.yml exec api pnpm test && docker compose -f docker-compose.dev.yml exec web pnpm test",
+    "test:api": "docker compose -f docker-compose.dev.yml exec api pnpm test",
+    "test:web": "docker compose -f docker-compose.dev.yml exec web pnpm test",
+    "build": "docker compose -f docker-compose.yml build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.12.1"
+}

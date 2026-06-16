@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    container_name: portfolio_api_dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: development
+      DATABASE_TYPE: sqlite
+      DATABASE_PATH: /app/data/dev.sqlite
+    volumes:
+      - api_data:/app/data
+    command: pnpm dev
+    # healthcheck:
+    #   test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    container_name: portfolio_web_dev
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./.env
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000
+    command: pnpm dev --host 0.0.0.0
+    # depends_on:
+    #   api:
+        # condition: service_healthy
+
+volumes:
+  api_data:
