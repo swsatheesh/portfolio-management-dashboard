@@ -1,7 +1,8 @@
 import cors from 'cors';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { AppDataSource } from './data-source';
 
 export function createApp() {
   const app = express();
@@ -11,11 +12,15 @@ export function createApp() {
   app.use(express.json());
   app.use(morgan('dev'));
 
-  app.get('/health', (_req, res) => {
-    res.status(200).json({ status: 'ok', service: 'portfolio-api' });
+  app.get('/health', (_req: Request, res: Response) => {
+    res.status(200).json({
+      status: 'ok',
+      service: 'portfolio-api',
+      database: AppDataSource.isInitialized ? 'connected' : 'disconnected',
+    });
   });
 
-  app.get('/api/v1', (_req, res) => {
+  app.get('/api/v1', (_req: Request, res: Response) => {
     res.status(200).json({ message: 'Portfolio Management Dashboard API' });
   });
 
