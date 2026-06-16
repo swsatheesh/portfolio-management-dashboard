@@ -5,8 +5,6 @@ describe('App', () => {
   it('renders the scaffold title', () => {
     render(<App />);
 
-    expect(
-      screen.getByRole('heading', { name: /docker-first react \+ express scaffold/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument();
   });
 });

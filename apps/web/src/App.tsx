@@ -1,17 +1,31 @@
-const apiBaseUrl = 'http://localhost:3000';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('accessToken');
+
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
 
 export function App() {
   return (
-    <main className="app-shell">
-      <section className="hero-card">
-        <p className="eyebrow">Portfolio Management Dashboard</p>
-        <h1>Docker-first React + Express scaffold</h1>
-        <p>
-          Commit 1 initializes the assessment project with Vite, Express, TypeScript,
-          Jest tests, and Docker Compose development commands.
-        </p>
-        <code>API: {apiBaseUrl}</code>
-      </section>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
