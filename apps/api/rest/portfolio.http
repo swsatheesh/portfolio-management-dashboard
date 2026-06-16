@@ -1,0 +1,51 @@
+@baseUrl=http://localhost:3000
+
+### Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "password123"
+}
+
+###
+
+@token={{login.response.body.accessToken}}
+
+### Create Stock Investment
+POST {{baseUrl}}/api/investments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Apple Inc.",
+  "symbol": "AAPL",
+  "assetType": "STOCK",
+  "quantity": 10,
+  "purchasePrice": 150,
+  "currentPrice": 200
+}
+
+###
+
+### Create Bond Investment
+POST {{baseUrl}}/api/investments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Government Bond",
+  "symbol": "GBOND",
+  "assetType": "BOND",
+  "quantity": 5,
+  "purchasePrice": 100,
+  "currentPrice": 110
+}
+
+###
+
+### Portfolio Summary
+GET {{baseUrl}}/api/portfolio/summary
+Authorization: Bearer {{token}}

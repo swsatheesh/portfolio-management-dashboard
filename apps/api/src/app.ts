@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { authRouter } from './auth/auth.routes';
 import { investmentRouter } from './investments/investment.routes';
 import { transactionRouter } from './transactions/transaction.routes';
+import { portfolioRouter } from './portfolio/portfolio.routes';
 import { AppDataSource } from './data-source';
 
 export function createApp() {
@@ -31,6 +32,7 @@ export function createApp() {
 
   app.use('/api/investments', investmentRouter);
   app.use('/api/transactions', transactionRouter);
+  app.use('/api/portfolio', portfolioRouter);
 
   return app;
 }
