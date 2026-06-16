@@ -24,11 +24,11 @@ describe('POST /api/auth/login', () => {
   function createTestApp() {
     const app = createApp();
 
-    const controller = new AuthController(
+    const authController = new AuthController(
       userRepository as unknown as Repository<UserEntity>
     );
 
-    app.post('/test/auth/login', controller.login);
+    app.post('/test/auth/login', authController.login);
 
     return app;
   }
@@ -75,7 +75,20 @@ describe('POST /api/auth/login', () => {
     });
   });
 
-  it('returns 400 when email or password is missing', async () => {
+  it('returns 400 when email is missing', async () => {
+    const response = await request(createTestApp())
+      .post('/test/auth/login')
+      .send({
+        password: 'password123',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      message: 'Email and password are required',
+    });
+  });
+
+  it('returns 400 when password is missing', async () => {
     const response = await request(createTestApp())
       .post('/test/auth/login')
       .send({
