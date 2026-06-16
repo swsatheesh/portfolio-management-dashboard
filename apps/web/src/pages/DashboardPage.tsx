@@ -51,6 +51,9 @@ export function DashboardPage() {
           <a className="link-button" href="/investments">
             Manage Investments
           </a>
+          <a className="link-button" href="/transactions">
+            Transactions
+          </a>
         </div>
         <button
           type="button"
