@@ -6,6 +6,12 @@ import {
   Transaction,
   TransactionType,
 } from '../types/transaction';
+import { AppLayout } from '../components/layout/AppLayout';
+import { formatDate } from '../utils/date';
+
+type TransactionValidationErrors = Partial<
+  Record<keyof CreateTransactionInput, string>
+>;
 
 const initialForm: CreateTransactionInput = {
   investmentId: '',
@@ -19,113 +25,198 @@ export function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [form, setForm] = useState<CreateTransactionInput>(initialForm);
+  const [validationErrors, setValidationErrors] =
+    useState<TransactionValidationErrors>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   async function loadPage() {
-    const [transactionData, investmentData] = await Promise.all([
-      apiRequest<Transaction[]>('/api/transactions'),
-      apiRequest<Investment[]>('/api/investments'),
-    ]);
+    try {
+      setError('');
 
-    setTransactions(transactionData);
-    setInvestments(investmentData);
+      const [transactionData, investmentData] = await Promise.all([
+        apiRequest<Transaction[]>('/api/transactions'),
+        apiRequest<Investment[]>('/api/investments'),
+      ]);
 
-    if (investmentData.length > 0 && !form.investmentId) {
+      setTransactions(transactionData);
+      setInvestments(investmentData);
+
       setForm((current) => ({
         ...current,
-        investmentId: investmentData[0].id,
+        investmentId: current.investmentId || investmentData[0]?.id || '',
       }));
+    } catch {
+      setError('Unable to load transactions');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
   useEffect(() => {
     loadPage();
   }, []);
 
+  function updateForm<K extends keyof CreateTransactionInput>(
+    key: K,
+    value: CreateTransactionInput[K]
+  ) {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
+
+    setValidationErrors((current) => ({
+      ...current,
+      [key]: undefined,
+    }));
+  }
+
+  function validateTransactionForm() {
+    const errors: TransactionValidationErrors = {};
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!form.investmentId) {
+      errors.investmentId = 'Investment is required';
+    }
+
+    if (!form.type) {
+      errors.type = 'Transaction type is required';
+    }
+
+    if (form.quantity <= 0) {
+      errors.quantity = 'Quantity must be greater than 0';
+    }
+
+    if (form.price <= 0) {
+      errors.price = 'Price must be greater than 0';
+    }
+
+    if (!form.transactionDate) {
+      errors.transactionDate = 'Transaction date is required';
+    }
+
+    if (form.transactionDate && form.transactionDate > today) {
+      errors.transactionDate = 'Future date is not allowed';
+    }
+
+    return errors;
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
-    await apiRequest('/api/transactions', {
-      method: 'POST',
-      body: JSON.stringify(form),
-    });
+    const errors = validateTransactionForm();
 
-    setForm({
-      ...initialForm,
-      investmentId: investments[0]?.id ?? '',
-    });
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
 
-    await loadPage();
+    try {
+      setError('');
+      setValidationErrors({});
+
+      await apiRequest('/api/transactions', {
+        method: 'POST',
+        body: JSON.stringify(form),
+      });
+
+      setForm({
+        ...initialForm,
+        investmentId: investments[0]?.id ?? '',
+      });
+
+      await loadPage();
+    } catch {
+      setError('Unable to create transaction');
+    }
   }
 
   async function deleteTransaction(id: string) {
-    await apiRequest(`/api/transactions/${id}`, {
-      method: 'DELETE',
-    });
+    const confirmed = window.confirm('Delete this transaction?');
 
-    await loadPage();
+    if (!confirmed) return;
+
+    try {
+      setError('');
+
+      await apiRequest(`/api/transactions/${id}`, {
+        method: 'DELETE',
+      });
+
+      await loadPage();
+    } catch {
+      setError('Unable to delete transaction');
+    }
   }
 
   if (isLoading) {
     return (
-      <main className="app-shell">
+      <AppLayout>
         <p>Loading transactions...</p>
-      </main>
+      </AppLayout>
     );
   }
 
   return (
-    <main className="app-shell">
+    <AppLayout>
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">Portfolio Activity</p>
           <h1>Transactions</h1>
         </div>
-
-        <a className="link-button" href="/dashboard">
-          Back to Dashboard
-        </a>
       </header>
+
+      {error && <p role="alert">{error}</p>}
 
       <section className="panel">
         <h2>Add Transaction</h2>
 
-        <form className="investment-form" onSubmit={handleSubmit}>
+        <form
+          className="transaction-form"
+          onSubmit={handleSubmit}
+          autoComplete="off"
+        >
           <label>
             Investment
             <select
               value={form.investmentId}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  investmentId: e.target.value,
-                })
+              onChange={(event) =>
+                updateForm('investmentId', event.target.value)
               }
             >
+              <option value="">Select investment</option>
+
               {investments.map((investment) => (
                 <option key={investment.id} value={investment.id}>
                   {investment.symbol}
                 </option>
               ))}
             </select>
+
+            {validationErrors.investmentId && (
+              <span className="field-error">
+                {validationErrors.investmentId}
+              </span>
+            )}
           </label>
 
           <label>
             Type
             <select
               value={form.type}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  type: e.target.value as TransactionType,
-                })
+              onChange={(event) =>
+                updateForm('type', event.target.value as TransactionType)
               }
             >
               <option value="BUY">BUY</option>
               <option value="SELL">SELL</option>
             </select>
+
+            {validationErrors.type && (
+              <span className="field-error">{validationErrors.type}</span>
+            )}
           </label>
 
           <label>
@@ -133,13 +224,16 @@ export function TransactionsPage() {
             <input
               type="number"
               value={form.quantity}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  quantity: Number(e.target.value),
-                })
+              min="0"
+              step="0.0001"
+              onChange={(event) =>
+                updateForm('quantity', Number(event.target.value))
               }
             />
+
+            {validationErrors.quantity && (
+              <span className="field-error">{validationErrors.quantity}</span>
+            )}
           </label>
 
           <label>
@@ -147,13 +241,16 @@ export function TransactionsPage() {
             <input
               type="number"
               value={form.price}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  price: Number(e.target.value),
-                })
+              min="0"
+              step="0.01"
+              onChange={(event) =>
+                updateForm('price', Number(event.target.value))
               }
             />
+
+            {validationErrors.price && (
+              <span className="field-error">{validationErrors.price}</span>
+            )}
           </label>
 
           <label>
@@ -161,60 +258,76 @@ export function TransactionsPage() {
             <input
               type="date"
               value={form.transactionDate}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  transactionDate: e.target.value,
-                })
+              onChange={(event) =>
+                updateForm('transactionDate', event.target.value)
               }
             />
+
+            {validationErrors.transactionDate && (
+              <span className="field-error">
+                {validationErrors.transactionDate}
+              </span>
+            )}
           </label>
 
-          <button type="submit">
-            Create Transaction
-          </button>
+          <div className="form-actions">
+            <button className="button button--primary" type="submit">
+              Create Transaction
+            </button>
+          </div>
         </form>
       </section>
 
       <section className="panel">
         <h2>History</h2>
 
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Investment</th>
-                <th>Type</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Date</th>
-                <th></th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {transactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td>{transaction.investment.symbol}</td>
-                  <td>{transaction.type}</td>
-                  <td>{transaction.quantity}</td>
-                  <td>${transaction.price}</td>
-                  <td>{transaction.transactionDate}</td>
-
-                  <td>
-                    <button
-                      className="small-button danger-button"
-                      onClick={() => deleteTransaction(transaction.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+        {transactions.length === 0 ? (
+          <p className="empty-state">No transactions found.</p>
+        ) : (
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Investment</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Date</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr key={transaction.id}>
+                    <td>{transaction.investment.symbol}</td>
+                    <td>{transaction.type}</td>
+                    <td>{transaction.quantity}</td>
+                    <td>{formatCurrency(transaction.price)}</td>
+                    <td>{formatDate(transaction.transactionDate)}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="small-button danger-button"
+                        onClick={() => deleteTransaction(transaction.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
-    </main>
+    </AppLayout>
   );
+}
+
+function formatCurrency(value: number) {
+  return `$${value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }

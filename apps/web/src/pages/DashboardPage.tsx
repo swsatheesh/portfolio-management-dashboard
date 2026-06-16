@@ -3,6 +3,7 @@ import { apiRequest } from '../lib/api';
 import { AssetAllocationChart } from '../components/AssetAllocationChart';
 import { SummaryCard } from '../components/SummaryCard';
 import { PortfolioSummary } from '../types/portfolio';
+import { AppLayout } from '../components/layout/AppLayout';
 
 export function DashboardPage() {
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
@@ -26,45 +27,29 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <main className="app-shell">
+      <AppLayout>
         <p>Loading dashboard...</p>
-      </main>
+      </AppLayout>
     );
   }
 
   if (error || !summary) {
     return (
-      <main className="app-shell">
+      <AppLayout>
         <p role="alert">{error || 'Portfolio summary unavailable'}</p>
-      </main>
+      </AppLayout>
     );
   }
 
   const gainTone = summary.totalGainLoss >= 0 ? 'positive' : 'negative';
 
   return (
-    <main className="app-shell">
+    <AppLayout>
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">Portfolio Overview</p>
           <h1>Dashboard</h1>
-          <a className="link-button" href="/investments">
-            Manage Investments
-          </a>
-          <a className="link-button" href="/transactions">
-            Transactions
-          </a>
         </div>
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => {
-            localStorage.removeItem('accessToken');
-            window.location.href = '/';
-          }}
-        >
-          Logout
-        </button>
       </header>
 
       <section className="summary-grid">
@@ -72,15 +57,18 @@ export function DashboardPage() {
           label="Total Invested"
           value={formatCurrency(summary.totalInvested)}
         />
+
         <SummaryCard
           label="Current Value"
           value={formatCurrency(summary.totalCurrentValue)}
         />
+
         <SummaryCard
           label="Gain / Loss"
           value={formatCurrency(summary.totalGainLoss)}
           tone={gainTone}
         />
+
         <SummaryCard
           label="Return"
           value={`${summary.totalGainLossPercentage.toFixed(2)}%`}
@@ -89,7 +77,7 @@ export function DashboardPage() {
       </section>
 
       <AssetAllocationChart data={summary.assetAllocation} />
-    </main>
+    </AppLayout>
   );
 }
 
