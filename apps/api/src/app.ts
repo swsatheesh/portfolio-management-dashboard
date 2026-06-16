@@ -7,6 +7,8 @@ import { investmentRouter } from './investments/investment.routes';
 import { transactionRouter } from './transactions/transaction.routes';
 import { portfolioRouter } from './portfolio/portfolio.routes';
 import { AppDataSource } from './data-source';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.config';
 
 export function createApp() {
   const app = express();
@@ -15,6 +17,8 @@ export function createApp() {
   app.use(cors());
   app.use(express.json());
   app.use(morgan('dev'));
+
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({
