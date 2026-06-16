@@ -8,7 +8,7 @@ import { transactionRouter } from './transactions/transaction.routes';
 import { portfolioRouter } from './portfolio/portfolio.routes';
 import { AppDataSource } from './data-source';
 import swaggerUi from 'swagger-ui-express';
-import { swaggerSpec } from './config/swagger.config';
+import { openApiSpec } from './docs/openapi';
 
 export function createApp() {
   const app = express();
@@ -18,7 +18,7 @@ export function createApp() {
   app.use(express.json());
   app.use(morgan('dev'));
 
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
   app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({
