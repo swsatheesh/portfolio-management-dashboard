@@ -5,8 +5,13 @@ import {
   CreateInvestmentInput,
   Investment,
 } from '../types/investment';
+import { AppLayout } from '../components/layout/AppLayout';
 
 const assetTypes: AssetType[] = ['STOCK', 'BOND', 'MUTUAL_FUND', 'ETF', 'CASH'];
+
+type InvestmentValidationErrors = Partial<
+  Record<keyof CreateInvestmentInput, string>
+>;
 
 const initialForm: CreateInvestmentInput = {
   name: '',
@@ -20,12 +25,16 @@ const initialForm: CreateInvestmentInput = {
 export function InvestmentsPage() {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [form, setForm] = useState<CreateInvestmentInput>(initialForm);
+  const [validationErrors, setValidationErrors] =
+    useState<InvestmentValidationErrors>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   async function loadInvestments() {
     try {
+      setError('');
+
       const data = await apiRequest<Investment[]>('/api/investments');
       setInvestments(data);
     } catch {
@@ -47,26 +56,88 @@ export function InvestmentsPage() {
       ...current,
       [key]: value,
     }));
+
+    setValidationErrors((current) => ({
+      ...current,
+      [key]: undefined,
+    }));
+  }
+
+  function validateInvestmentForm() {
+    const errors: InvestmentValidationErrors = {};
+    const symbolPattern = /^[A-Z0-9._-]+$/;
+
+    if (!form.name.trim()) {
+      errors.name = 'Investment name is required';
+    }
+
+    if (form.name.trim().length > 80) {
+      errors.name = 'Investment name must be less than 80 characters';
+    }
+
+    if (!form.symbol.trim()) {
+      errors.symbol = 'Symbol is required';
+    }
+
+    if (form.symbol.trim().length > 20) {
+      errors.symbol = 'Symbol must be less than 20 characters';
+    }
+
+    if (form.symbol.trim() && !symbolPattern.test(form.symbol.trim())) {
+      errors.symbol = 'Symbol can contain only uppercase letters, numbers, dot, dash or underscore';
+    }
+
+    if (!form.assetType) {
+      errors.assetType = 'Asset type is required';
+    }
+
+    if (form.quantity <= 0) {
+      errors.quantity = 'Quantity must be greater than 0';
+    }
+
+    if (form.purchasePrice <= 0) {
+      errors.purchasePrice = 'Purchase price must be greater than 0';
+    }
+
+    if (form.currentPrice < 0) {
+      errors.currentPrice = 'Current price cannot be negative';
+    }
+
+    return errors;
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
 
+    const errors = validateInvestmentForm();
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    const payload: CreateInvestmentInput = {
+      ...form,
+      name: form.name.trim(),
+      symbol: form.symbol.trim().toUpperCase(),
+    };
+
     try {
       if (editingId) {
         await apiRequest<Investment>(`/api/investments/${editingId}`, {
           method: 'PATCH',
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
       } else {
         await apiRequest<Investment>('/api/investments', {
           method: 'POST',
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
       }
 
       setForm(initialForm);
+      setValidationErrors({});
       setEditingId(null);
       await loadInvestments();
     } catch {
@@ -76,6 +147,9 @@ export function InvestmentsPage() {
 
   function startEdit(investment: Investment) {
     setEditingId(investment.id);
+    setError('');
+    setValidationErrors({});
+
     setForm({
       name: investment.name,
       symbol: investment.symbol,
@@ -86,12 +160,21 @@ export function InvestmentsPage() {
     });
   }
 
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(initialForm);
+    setValidationErrors({});
+    setError('');
+  }
+
   async function deleteInvestment(id: string) {
     const confirmed = window.confirm('Delete this investment?');
 
     if (!confirmed) return;
 
     try {
+      setError('');
+
       await apiRequest<void>(`/api/investments/${id}`, {
         method: 'DELETE',
       });
@@ -103,15 +186,12 @@ export function InvestmentsPage() {
   }
 
   return (
-    <main className="app-shell">
+    <AppLayout>
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">Portfolio Holdings</p>
           <h1>Investments</h1>
         </div>
-        <a className="link-button" href="/dashboard">
-          Back to Dashboard
-        </a>
       </header>
 
       {error && <p role="alert">{error}</p>}
@@ -119,14 +199,21 @@ export function InvestmentsPage() {
       <section className="panel">
         <h2>{editingId ? 'Edit Investment' : 'Add Investment'}</h2>
 
-        <form className="investment-form" onSubmit={handleSubmit}>
+        <form
+          className="investment-form"
+          onSubmit={handleSubmit}
+          autoComplete="off"
+        >
           <label>
             Name
             <input
               value={form.name}
               onChange={(event) => updateForm('name', event.target.value)}
-              required
             />
+
+            {validationErrors.name && (
+              <span className="field-error">{validationErrors.name}</span>
+            )}
           </label>
 
           <label>
@@ -136,8 +223,11 @@ export function InvestmentsPage() {
               onChange={(event) =>
                 updateForm('symbol', event.target.value.toUpperCase())
               }
-              required
             />
+
+            {validationErrors.symbol && (
+              <span className="field-error">{validationErrors.symbol}</span>
+            )}
           </label>
 
           <label>
@@ -154,6 +244,10 @@ export function InvestmentsPage() {
                 </option>
               ))}
             </select>
+
+            {validationErrors.assetType && (
+              <span className="field-error">{validationErrors.assetType}</span>
+            )}
           </label>
 
           <label>
@@ -166,8 +260,11 @@ export function InvestmentsPage() {
               }
               min="0"
               step="0.0001"
-              required
             />
+
+            {validationErrors.quantity && (
+              <span className="field-error">{validationErrors.quantity}</span>
+            )}
           </label>
 
           <label>
@@ -180,8 +277,13 @@ export function InvestmentsPage() {
               }
               min="0"
               step="0.01"
-              required
             />
+
+            {validationErrors.purchasePrice && (
+              <span className="field-error">
+                {validationErrors.purchasePrice}
+              </span>
+            )}
           </label>
 
           <label>
@@ -194,12 +296,17 @@ export function InvestmentsPage() {
               }
               min="0"
               step="0.01"
-              required
             />
+
+            {validationErrors.currentPrice && (
+              <span className="field-error">
+                {validationErrors.currentPrice}
+              </span>
+            )}
           </label>
 
           <div className="form-actions">
-            <button type="submit">
+            <button className="button button--primary" type="submit">
               {editingId ? 'Update Investment' : 'Create Investment'}
             </button>
 
@@ -207,10 +314,7 @@ export function InvestmentsPage() {
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => {
-                  setEditingId(null);
-                  setForm(initialForm);
-                }}
+                onClick={cancelEdit}
               >
                 Cancel
               </button>
@@ -241,6 +345,7 @@ export function InvestmentsPage() {
                   <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {investments.map((investment) => (
                   <tr key={investment.id}>
@@ -265,6 +370,7 @@ export function InvestmentsPage() {
                         >
                           Edit
                         </button>
+
                         <button
                           type="button"
                           className="small-button danger-button"
@@ -281,7 +387,7 @@ export function InvestmentsPage() {
           </div>
         )}
       </section>
-    </main>
+    </AppLayout>
   );
 }
 

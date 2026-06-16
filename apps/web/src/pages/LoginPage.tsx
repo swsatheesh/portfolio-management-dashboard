@@ -48,7 +48,9 @@ export function LoginPage() {
 
         {error && <p role="alert">{error}</p>}
 
-        <button type="submit">Login</button>
+        <div className="submit-btn-wrapper">
+          <button className="button button--primary" type="submit">Login</button>
+        </div>
       </form>
     </main>
   );

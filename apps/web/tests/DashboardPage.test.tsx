@@ -1,58 +1,75 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from '../src/pages/DashboardPage';
+import { ThemeProvider } from '../src/context/ThemeContext';
+import { apiRequest } from '../src/lib/api';
 
 jest.mock('../src/lib/api', () => ({
   apiRequest: jest.fn(),
 }));
 
-import { apiRequest } from '../src/lib/api';
-
 const mockedApiRequest = apiRequest as jest.Mock;
+
+function renderDashboardPage() {
+  return render(
+    <MemoryRouter>
+      <ThemeProvider>
+        <DashboardPage />
+      </ThemeProvider>
+    </MemoryRouter>
+  );
+}
 
 describe('DashboardPage', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     localStorage.setItem('accessToken', 'test-token');
-    mockedApiRequest.mockReset();
   });
 
   it('renders portfolio summary metrics', async () => {
     mockedApiRequest.mockResolvedValue({
-      totalInvested: 2000,
-      totalCurrentValue: 2550,
-      totalGainLoss: 550,
-      totalGainLossPercentage: 27.5,
+      totalInvested: 10000,
+      totalCurrentValue: 12000,
+      totalGainLoss: 2000,
+      totalGainLossPercentage: 20,
       assetAllocation: [
         {
           assetType: 'STOCK',
-          currentValue: 2000,
-          percentage: 78.43,
+          value: 12000,
+          percentage: 100,
         },
       ],
     });
 
-    render(<DashboardPage />);
+    renderDashboardPage();
 
     expect(screen.getByText(/loading dashboard/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /dashboard/i })).toBeInTheDocument();
+      expect(screen.getByText(/portfolio overview/i)).toBeInTheDocument();
     });
 
+    expect(screen.getByText('$10,000.00')).toBeInTheDocument();
+    expect(screen.getByText('$12,000.00')).toBeInTheDocument();
     expect(screen.getByText('$2,000.00')).toBeInTheDocument();
-    expect(screen.getByText('$2,550.00')).toBeInTheDocument();
-    expect(screen.getByText('$550.00')).toBeInTheDocument();
-    expect(screen.getByText('27.50%')).toBeInTheDocument();
+    expect(screen.getByText('20.00%')).toBeInTheDocument();
   });
 
   it('renders error state when summary request fails', async () => {
-    mockedApiRequest.mockRejectedValue(new Error('Failed'));
+    mockedApiRequest.mockRejectedValue(new Error('Request failed'));
 
-    render(<DashboardPage />);
+    renderDashboardPage();
 
     await waitFor(() => {
       expect(
-        screen.getByRole('alert', { name: '' })
-      ).toHaveTextContent('Unable to load portfolio summary');
+        screen.getByRole('alert', {
+          name: '',
+        })
+      ).toBeInTheDocument();
     });
+
+    expect(
+      screen.getByText(/unable to load portfolio summary/i)
+    ).toBeInTheDocument();
   });
 });
