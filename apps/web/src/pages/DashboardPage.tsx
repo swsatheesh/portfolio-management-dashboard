@@ -48,6 +48,9 @@ export function DashboardPage() {
         <div>
           <p className="eyebrow">Portfolio Overview</p>
           <h1>Dashboard</h1>
+          <a className="link-button" href="/investments">
+            Manage Investments
+          </a>
         </div>
         <button
           type="button"
