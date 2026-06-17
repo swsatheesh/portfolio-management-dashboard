@@ -1,4 +1,4 @@
-import { TransactionType } from '../../entities/transaction.entity';
+import { TransactionType } from '../entities/transaction.entity';
 
 export interface CreateTransactionDto {
   investmentId: string;
