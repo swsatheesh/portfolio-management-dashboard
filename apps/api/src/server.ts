@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import dotenv from 'dotenv';
 import { createApp } from './app';
 import { AppDataSource } from './data-source';
-import { seedDevelopmentUser } from './seeds/dev-user.seed';
+import { runSeeds } from './seeds/seed';
 
 dotenv.config();
 
@@ -11,7 +11,7 @@ const port = Number(process.env.API_PORT ?? 3000);
 async function bootstrap() {
   await AppDataSource.initialize();
 
-  await seedDevelopmentUser(AppDataSource);
+  await runSeeds(AppDataSource);
 
   const app = createApp();
 

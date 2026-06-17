@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { DataSource } from 'typeorm';
-import { seedDevelopmentUser } from '../src/seeds/dev-user.seed';
+import { seedDevelopmentUser } from '../src/seeds/user.seed';
 
 describe('seedDevelopmentUser', () => {
   const originalEnv = process.env;
