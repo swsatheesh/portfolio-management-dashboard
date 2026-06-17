@@ -1,17 +1,55 @@
-const apiBaseUrl = 'http://localhost:3000';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+import { InvestmentsPage } from './pages/InvestmentsPage';
+import { TransactionsPage } from './pages/TransactionsPage';
+import { LandingPage } from './pages/LandingPage';
+import { PublicRoute } from './components/routes/PublicRoute';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('accessToken');
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
 
 export function App() {
   return (
-    <main className="app-shell">
-      <section className="hero-card">
-        <p className="eyebrow">Portfolio Management Dashboard</p>
-        <h1>Docker-first React + Express scaffold</h1>
-        <p>
-          Commit 1 initializes the assessment project with Vite, Express, TypeScript,
-          Jest tests, and Docker Compose development commands.
-        </p>
-        <code>API: {apiBaseUrl}</code>
-      </section>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/investments"
+          element={
+            <ProtectedRoute>
+              <InvestmentsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <TransactionsPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
