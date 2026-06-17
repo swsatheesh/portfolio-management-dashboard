@@ -1,8 +1,8 @@
-import { swaggerSpec } from '../src/config/swagger.config';
+import { openApiSpec } from '../src/docs/openapi';
 
-describe('swaggerSpec', () => {
+describe('openApiSpec', () => {
   it('creates OpenAPI specification', () => {
-    expect(swaggerSpec).toMatchObject({
+    expect(openApiSpec).toMatchObject({
       openapi: '3.0.0',
       info: {
         title: 'Portfolio Management Dashboard API',
@@ -12,8 +12,27 @@ describe('swaggerSpec', () => {
   });
 
   it('includes bearer auth security scheme', () => {
-    expect(swaggerSpec.components?.securitySchemes).toHaveProperty(
+    expect(openApiSpec.components?.securitySchemes).toHaveProperty(
       'bearerAuth'
     );
+  });
+
+  it('contains auth endpoints', () => {
+    expect(openApiSpec.paths).toHaveProperty('/api/auth/login');
+    expect(openApiSpec.paths).toHaveProperty('/api/auth/profile');
+  });
+
+  it('contains investment endpoints', () => {
+    expect(openApiSpec.paths).toHaveProperty('/api/investments');
+    expect(openApiSpec.paths).toHaveProperty('/api/investments/{id}');
+  });
+
+  it('contains transaction endpoints', () => {
+    expect(openApiSpec.paths).toHaveProperty('/api/transactions');
+    expect(openApiSpec.paths).toHaveProperty('/api/transactions/{id}');
+  });
+
+  it('contains portfolio endpoints', () => {
+    expect(openApiSpec.paths).toHaveProperty('/api/portfolio/summary');
   });
 });

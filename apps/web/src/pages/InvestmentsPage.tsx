@@ -259,7 +259,7 @@ export function InvestmentsPage() {
                 updateForm('quantity', Number(event.target.value))
               }
               min="0"
-              step="0.0001"
+              step="0.01"
             />
 
             {validationErrors.quantity && (

@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import type { PieLabelRenderProps } from 'recharts/types/polar/Pie';
 import { AssetAllocation } from '../types/portfolio';
 
 interface AssetAllocationChartProps {
@@ -24,24 +25,32 @@ export function AssetAllocationChart({ data }: AssetAllocationChartProps) {
               dataKey="currentValue"
               nameKey="assetType"
               outerRadius={90}
-              label={({ assetType, percentage }) =>
-                `${assetType} ${Number(percentage).toFixed(1)}%`
-              }
+              label={renderAssetLabel}
             >
               {data.map((item, index) => (
-                <Cell key={item.assetType} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={item.assetType}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
-            <Tooltip
-              formatter={(value) =>
-                formatCurrency(Number(value))
-              }
-            />
+
+            <Tooltip formatter={(value) => formatCurrency(Number(value))} />
           </PieChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
+}
+
+function renderAssetLabel(props: PieLabelRenderProps) {
+  const payload = props.payload as AssetAllocation | undefined;
+
+  if (!payload) {
+    return '';
+  }
+
+  return `${payload.assetType} ${Number(payload.percentage).toFixed(1)}%`;
 }
 
 function formatCurrency(value: number) {

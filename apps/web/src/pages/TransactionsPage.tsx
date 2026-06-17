@@ -225,7 +225,7 @@ export function TransactionsPage() {
               type="number"
               value={form.quantity}
               min="0"
-              step="0.0001"
+              step="0.01"
               onChange={(event) =>
                 updateForm('quantity', Number(event.target.value))
               }
