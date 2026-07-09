@@ -12,6 +12,9 @@ import { portfolioRouter } from './portfolio/portfolio.routes';
 import swaggerUi from 'swagger-ui-express';
 import { openApiSpec } from './docs/openapi';
 
+import { errorHandler } from './middleware/error-handler';
+import { notFoundHandler } from './middleware/not-found-handler';
+
 export function createApp() {
   const app = express();
 
@@ -56,6 +59,9 @@ export function createApp() {
   app.use('/api/investments', investmentRouter);
   app.use('/api/transactions', transactionRouter);
   app.use('/api/portfolio', portfolioRouter);
+
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }

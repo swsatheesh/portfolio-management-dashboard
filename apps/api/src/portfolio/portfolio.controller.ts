@@ -3,6 +3,8 @@ import { AppDataSource } from '../data-source';
 import { InvestmentEntity } from '../entities/investment.entity';
 import { PortfolioService } from './portfolio.service';
 
+import { asyncHandler } from '../middleware/async-handler';
+
 export class PortfolioController {
   private readonly portfolioService: PortfolioService;
 
@@ -14,9 +16,9 @@ export class PortfolioController {
     this.portfolioService = portfolioService;
   }
 
-  getSummary = async (req: Request, res: Response) => {
+  getSummary = asyncHandler(async (req: Request, res: Response) => {
     const summary = await this.portfolioService.getSummary(req.user!.id);
 
     return res.status(200).json(summary);
-  };
+  });
 }

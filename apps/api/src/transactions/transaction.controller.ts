@@ -5,6 +5,9 @@ import { TransactionEntity } from '../entities/transaction.entity';
 import { TransactionService } from './transaction.service';
 import { getParamAsString } from '../common/utils/param.util';
 
+import { asyncHandler } from '../middleware/async-handler';
+import { NotFoundError } from '../errors/api-error';
+
 export class TransactionController {
   private readonly transactionService: TransactionService;
 
@@ -17,13 +20,13 @@ export class TransactionController {
     this.transactionService = transactionService;
   }
 
-  findAll = async (req: Request, res: Response) => {
+  findAll = asyncHandler(async (req: Request, res: Response) => {
     const transactions = await this.transactionService.findAll(req.user!.id);
 
     return res.status(200).json(transactions);
-  };
+  });
 
-  findById = async (req: Request, res: Response) => {
+  findById = asyncHandler(async (req: Request, res: Response) => {
     const transactionId = getParamAsString(req.params.id);
 
     const transaction = await this.transactionService.findById(
@@ -32,30 +35,26 @@ export class TransactionController {
     );
 
     if (!transaction) {
-      return res.status(404).json({
-        message: 'Transaction not found',
-      });
+      throw new NotFoundError("Transaction not found");
     }
 
     return res.status(200).json(transaction);
-  };
+  });
 
-  create = async (req: Request, res: Response) => {
+  create = asyncHandler(async (req: Request, res: Response) => {
     const transaction = await this.transactionService.create(
       req.user!.id,
       req.body
     );
 
     if (!transaction) {
-      return res.status(404).json({
-        message: 'Investment not found',
-      });
+      throw new NotFoundError("Investment not found");
     }
 
     return res.status(201).json(transaction);
-  };
+  });
 
-  update = async (req: Request, res: Response) => {
+  update = asyncHandler(async (req: Request, res: Response) => {
     const transactionId = getParamAsString(req.params.id);
 
     const transaction = await this.transactionService.update(
@@ -65,15 +64,13 @@ export class TransactionController {
     );
 
     if (!transaction) {
-      return res.status(404).json({
-        message: 'Transaction not found',
-      });
+      throw new NotFoundError("Transaction not found");
     }
 
     return res.status(200).json(transaction);
-  };
+  });
 
-  delete = async (req: Request, res: Response) => {
+  delete = asyncHandler(async (req: Request, res: Response) => {
     const transactionId = getParamAsString(req.params.id);
 
     const deleted = await this.transactionService.delete(
@@ -82,11 +79,9 @@ export class TransactionController {
     );
 
     if (!deleted) {
-      return res.status(404).json({
-        message: 'Transaction not found',
-      });
+      throw new NotFoundError("Transaction not found");
     }
 
     return res.status(204).send();
-  };
+  });
 }
