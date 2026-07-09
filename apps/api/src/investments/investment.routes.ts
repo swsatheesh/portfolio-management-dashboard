@@ -6,6 +6,7 @@ export const investmentRouter = Router();
 
 const investmentController = new InvestmentController();
 
+investmentRouter.get('/symbols/:symbol?', investmentController.fetchSymbol);
 investmentRouter.use(authMiddleware);
 
 investmentRouter.get('/', investmentController.findAll);
