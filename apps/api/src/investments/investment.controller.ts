@@ -4,6 +4,7 @@ import { InvestmentEntity } from '../entities/investment.entity';
 import { UserEntity } from '../entities/user.entity';
 import { InvestmentService } from './investment.service';
 import { getParamAsString } from '../common/utils/param.util';
+import stocks from '../seeds/stocks.json';
 
 export class InvestmentController {
   private readonly investmentService: InvestmentService;
@@ -15,6 +16,28 @@ export class InvestmentController {
     )
   ) {
     this.investmentService = investmentService;
+  }
+
+  // Edge
+  // if symbol exist and exit in stock send specific stock
+  // Incorrect symbole return 404
+  // Symbol not exist send all
+  fetchSymbol(req: Request, res: Response) {
+    const symbol = req.params.symbol;
+
+    if (symbol) {
+      const stockDetails = stocks.stocks.find(
+        stock => stock.symbol.toUpperCase() === symbol
+      );
+      console.log(stocks.stocks.map(ele => ele.symbol));
+      if (!stockDetails) {
+        return res.status(404).json({ message: 'Stock symbol not found not found' }); 
+      }
+
+      return res.status(200).json(stockDetails);
+    }
+
+    return res.status(200).json(stocks.stocks);
   }
 
   findAll = async (req: Request, res: Response) => {
