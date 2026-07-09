@@ -1,12 +1,8 @@
 import 'reflect-metadata';
-import dotenv from 'dotenv';
 import { createApp } from './app';
+import { appConfig } from './config/auth.config';
 import { AppDataSource } from './data-source';
 import { runSeeds } from './seeds/seed';
-
-dotenv.config();
-
-const port = Number(process.env.API_PORT ?? 3000);
 
 async function bootstrap() {
   await AppDataSource.initialize();
@@ -15,8 +11,8 @@ async function bootstrap() {
 
   const app = createApp();
 
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`API server running on http://localhost:${port}`);
+  app.listen(appConfig.port, '0.0.0.0', () => {
+    console.log(`API server running on http://localhost:${appConfig.port}`);
   });
 }
 
