@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { AuthService } from '../src/auth/auth.service';
 import { UserEntity } from '../src/entities/user.entity';
+import { UnauthorizedError } from '../src/errors/api-error';
 
 type MockUserRepository = {
   findOne: jest.Mock;
@@ -47,18 +48,26 @@ describe('AuthService', () => {
     });
   });
 
-  it('returns null when user does not exist', async () => {
+  it('returns error when user does not exist', async () => {
     userRepository.findOne.mockResolvedValue(null);
 
-    const user = await authService.validateUser({
-      email: 'missing@test.com',
-      password: 'password123',
-    });
+    try {
+      const user = await authService.validateUser({
+        email: 'missing@test.com',
+        password: 'password123',
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect(userRepository.findOne).toHaveBeenCalledTimes(1);
+      if (error instanceof UnauthorizedError) {
+        expect(error.message).toBe('Invalid email or password');
+      }
+    }
 
-    expect(user).toBeNull();
+
   });
 
-  it('returns null when password is invalid', async () => {
+  it('returns error when password is invalid', async () => {
     const passwordHash = await bcrypt.hash('password123', 10);
 
     userRepository.findOne.mockResolvedValue({
@@ -68,12 +77,20 @@ describe('AuthService', () => {
       passwordHash,
     } as UserEntity);
 
-    const user = await authService.validateUser({
-      email: 'admin@test.com',
-      password: 'wrong-password',
-    });
+    try {
+      const user = await authService.validateUser({
+        email: 'admin@test.com',
+        password: 'wrong-password',
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect(userRepository.findOne).toHaveBeenCalledTimes(1);
+      if (error instanceof UnauthorizedError) {
+        expect(error.message).toBe('Invalid email or password');
+      }
+    }
 
-    expect(user).toBeNull();
+
   });
 
   it('generates a valid JWT token', () => {

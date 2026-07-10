@@ -5,6 +5,7 @@ import {
   CreateTransactionDto,
   UpdateTransactionDto,
 } from './dto/transaction.dto';
+import { BadRequestError, NotFoundError } from '../errors/api-error';
 
 export class TransactionService {
   constructor(
@@ -31,7 +32,7 @@ export class TransactionService {
   }
 
   async findById(userId: string, transactionId: string) {
-    return this.transactionRepository.findOne({
+    const transaction = await this.transactionRepository.findOne({
       relations: {
         investment: true,
       },
@@ -44,6 +45,12 @@ export class TransactionService {
         },
       },
     });
+
+    if (!transaction) {
+      throw new NotFoundError("Transaction not found");
+    }
+
+    return transaction;
   }
 
   async create(userId: string, dto: CreateTransactionDto) {
@@ -57,9 +64,19 @@ export class TransactionService {
     });
 
     if (!investment) {
-      return null;
+      throw new NotFoundError("Investment not found");
     }
 
+    const quantity = Number(investment.quantity);
+    const transactionQuantity = Number(dto.quantity);
+
+    if (dto.type === 'SELL' && transactionQuantity > quantity) {
+      throw new BadRequestError('Sell quantity exceeds current holding');
+    }
+
+    investment.quantity = dto.type === 'BUY' ? quantity + transactionQuantity : quantity - transactionQuantity;
+
+    await this.investmentRepository.save(investment);
     const transaction = this.transactionRepository.create({
       type: dto.type,
       quantity: dto.quantity,
@@ -78,10 +95,6 @@ export class TransactionService {
   ) {
     const transaction = await this.findById(userId, transactionId);
 
-    if (!transaction) {
-      return null;
-    }
-
     Object.assign(transaction, dto);
 
     return this.transactionRepository.save(transaction);
@@ -89,10 +102,6 @@ export class TransactionService {
 
   async delete(userId: string, transactionId: string) {
     const transaction = await this.findById(userId, transactionId);
-
-    if (!transaction) {
-      return false;
-    }
 
     await this.transactionRepository.remove(transaction);
 

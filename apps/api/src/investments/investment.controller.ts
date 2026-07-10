@@ -28,7 +28,7 @@ export class InvestmentController {
       const stockDetails = stocks.stocks.find(
         stock => stock.symbol.toUpperCase() === symbol
       );
-      console.log(stocks.stocks.map(ele => ele.symbol));
+
       if (!stockDetails) {
         throw new NotFoundError("Stock symbol not found");
       }
@@ -52,20 +52,11 @@ export class InvestmentController {
       transactionId
     );
 
-    if (!investment) {
-      throw new NotFoundError("Investment not found");
-    }
-
     return res.status(200).json(investment);
   });
 
   create = asyncHandler(async (req: Request, res: Response) => {
     const investment = await this.investmentService.create(req.user!.id, req.body);
-
-    if (!investment) {
-      throw new NotFoundError("User not found");
-    }
-
     return res.status(201).json(investment);
   });
 
@@ -78,20 +69,12 @@ export class InvestmentController {
       req.body
     );
 
-    if (!investment) {
-      throw new NotFoundError("Investment not found");
-    }
-
     return res.status(200).json(investment);
   });
 
   delete = asyncHandler(async (req: Request, res: Response) => {
     const transactionId = getParamAsString(req.params.id);
-    const deleted = await this.investmentService.delete(req.user!.id, transactionId);
-
-    if (!deleted) {
-      throw new NotFoundError("Investment not found");
-    }
+    await this.investmentService.delete(req.user!.id, transactionId);
 
     return res.status(204).send();
   });

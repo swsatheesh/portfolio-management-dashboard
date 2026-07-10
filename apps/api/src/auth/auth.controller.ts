@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 
 import { asyncHandler } from '../middleware/async-handler';
-import { UnauthorizedError, BadRequestError } from '../errors/api-error';
+import { BadRequestError } from '../errors/api-error';
 
 export class AuthController {
   private readonly authService: AuthService;
@@ -25,10 +25,6 @@ export class AuthController {
     }
 
     const result = await this.authService.login(dto);
-
-    if (!result) {
-      throw new UnauthorizedError("Invalid email or password");
-    }
 
     return res.status(200).json(result);
   });

@@ -5,6 +5,7 @@ import {
   TransactionType,
 } from '../src/entities/transaction.entity';
 import { TransactionService } from '../src/transactions/transaction.service';
+import { NotFoundError } from '../src/errors/api-error';
 
 type MockRepository<T> = {
   find: jest.Mock;
@@ -16,7 +17,7 @@ type MockRepository<T> = {
 
 describe('TransactionService', () => {
   let transactionRepository: MockRepository<TransactionEntity>;
-  let investmentRepository: Pick<MockRepository<InvestmentEntity>, 'findOne'>;
+  let investmentRepository: Pick<MockRepository<InvestmentEntity>, 'findOne' | 'save'>;
   let service: TransactionService;
 
   beforeEach(() => {
@@ -30,6 +31,7 @@ describe('TransactionService', () => {
 
     investmentRepository = {
       findOne: jest.fn(),
+      save: jest.fn(),
     };
 
     service = new TransactionService(
@@ -147,20 +149,25 @@ describe('TransactionService', () => {
     expect(result).toEqual(transaction);
   });
 
-  it('returns null when creating transaction for missing investment', async () => {
+  it('returns error when creating transaction for missing investment', async () => {
     investmentRepository.findOne.mockResolvedValue(null);
-
-    const result = await service.create('user-1', {
-      investmentId: 'missing-investment',
-      type: TransactionType.BUY,
-      quantity: 10,
-      price: 150,
-      transactionDate: new Date('2026-06-16T00:00:00.000Z'),
-    });
-
-    expect(result).toBeNull();
-    expect(transactionRepository.create).not.toHaveBeenCalled();
-    expect(transactionRepository.save).not.toHaveBeenCalled();
+    
+    try {
+      const result = await service.create('user-1', {
+        investmentId: 'missing-investment',
+        type: TransactionType.BUY,
+        quantity: 10,
+        price: 150,
+        transactionDate: new Date('2026-06-16T00:00:00.000Z'),
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect(transactionRepository.create).not.toHaveBeenCalled();
+      expect(transactionRepository.save).not.toHaveBeenCalled();
+      if (error instanceof NotFoundError) {
+        expect(error.message).toEqual('Investment not found')
+      }
+    }
   });
 
   it('updates an existing transaction', async () => {
@@ -199,15 +206,22 @@ describe('TransactionService', () => {
     });
   });
 
-  it('returns null when updating missing transaction', async () => {
+  it('returns error when updating missing transaction', async () => {
     transactionRepository.findOne.mockResolvedValue(null);
 
-    const result = await service.update('user-1', 'missing-transaction', {
-      quantity: 12,
-    });
+    try {
+      const result = await service.update('user-1', 'missing-transaction', {
+        quantity: 12,
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect(transactionRepository.save).not.toHaveBeenCalled();
+      if (error instanceof NotFoundError) {
+        expect(error.message).toEqual('Transaction not found')
+      }
+    }
 
-    expect(result).toBeNull();
-    expect(transactionRepository.save).not.toHaveBeenCalled();
+
   });
 
   it('deletes an existing transaction', async () => {
@@ -224,12 +238,17 @@ describe('TransactionService', () => {
     expect(result).toBe(true);
   });
 
-  it('returns false when deleting missing transaction', async () => {
+  it('returns error when deleting missing transaction', async () => {
     transactionRepository.findOne.mockResolvedValue(null);
 
-    const result = await service.delete('user-1', 'missing-transaction');
-
-    expect(transactionRepository.remove).not.toHaveBeenCalled();
-    expect(result).toBe(false);
+    try {
+      const result = await service.delete('user-1', 'missing-transaction');
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect(transactionRepository.remove).not.toHaveBeenCalled();
+      if (error instanceof NotFoundError) {
+        expect(error.message).toEqual('Transaction not found')
+      }
+    }
   });
 });

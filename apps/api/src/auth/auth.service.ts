@@ -5,6 +5,7 @@ import { getAuthConfig } from '../config/auth.config';
 import { UserEntity } from '../entities/user.entity';
 import { AuthUser, JwtPayload } from './auth.types';
 import { LoginDto } from './dto/login.dto';
+import { UnauthorizedError } from '../errors/api-error';
 
 export class AuthService {
   constructor(private readonly userRepository: Repository<UserEntity>) {}
@@ -14,11 +15,15 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    if (!user) return null;
+    if (!user) {
+      throw new UnauthorizedError("Invalid email or password");
+    }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
 
-    if (!isPasswordValid) return null;
+    if (!isPasswordValid) {
+      throw new UnauthorizedError("Invalid email or password");
+    }
 
     return {
       id: user.id,
@@ -43,9 +48,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.validateUser(dto);
-
-    if (!user) return null;
+    const user = await this.validateUser(dto) as AuthUser;
 
     return {
       accessToken: this.generateToken(user),

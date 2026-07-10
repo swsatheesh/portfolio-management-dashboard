@@ -6,7 +6,6 @@ import { TransactionService } from './transaction.service';
 import { getParamAsString } from '../common/utils/param.util';
 
 import { asyncHandler } from '../middleware/async-handler';
-import { NotFoundError } from '../errors/api-error';
 
 export class TransactionController {
   private readonly transactionService: TransactionService;
@@ -34,10 +33,6 @@ export class TransactionController {
       transactionId
     );
 
-    if (!transaction) {
-      throw new NotFoundError("Transaction not found");
-    }
-
     return res.status(200).json(transaction);
   });
 
@@ -46,10 +41,6 @@ export class TransactionController {
       req.user!.id,
       req.body
     );
-
-    if (!transaction) {
-      throw new NotFoundError("Investment not found");
-    }
 
     return res.status(201).json(transaction);
   });
@@ -63,10 +54,6 @@ export class TransactionController {
       req.body
     );
 
-    if (!transaction) {
-      throw new NotFoundError("Transaction not found");
-    }
-
     return res.status(200).json(transaction);
   });
 
@@ -78,10 +65,6 @@ export class TransactionController {
       transactionId
     );
 
-    if (!deleted) {
-      throw new NotFoundError("Transaction not found");
-    }
-
-    return res.status(204).send();
+    return res.status(204).send({ message: 'Transaction deleted successfully' });
   });
 }
