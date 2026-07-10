@@ -73,7 +73,17 @@ Content-Type: application/json
 GET {{baseUrl}}/api/transactions
 Authorization: Bearer {{token}}
 
-###
+### Limit list Transactions
+GET {{baseUrl}}/api/transactions?page=1&limit=10&type=BUY
+Authorization: Bearer {{token}}
+
+### Filter by date
+GET {{baseUrl}}/api/transactions?dateFrom=2026-01-01&dateTo=2026-07-10
+Authorization: Bearer {{token}}
+
+### Sort by transaction date
+GET {{baseUrl}}/api/transactions?search=AAPL&sortBy=transactionDate&sortOrder=DESC
+Authorization: Bearer {{token}}
 
 ### Get Transaction By ID
 GET {{baseUrl}}/api/transactions/{{transactionId}}

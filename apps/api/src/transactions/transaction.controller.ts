@@ -6,6 +6,7 @@ import { TransactionService } from './transaction.service';
 import { getParamAsString } from '../common/utils/param.util';
 
 import { asyncHandler } from '../middleware/async-handler';
+import { TransactionQuery } from './transaction-query.validation';
 
 export class TransactionController {
   private readonly transactionService: TransactionService;
@@ -20,7 +21,12 @@ export class TransactionController {
   }
 
   findAll = asyncHandler(async (req: Request, res: Response) => {
-    const transactions = await this.transactionService.findAll(req.user!.id);
+    const query = res.locals.validated.query as TransactionQuery;
+
+    const transactions = await this.transactionService.findAll(
+      req.user!.id,
+      query
+    );
 
     return res.status(200).json(transactions);
   });

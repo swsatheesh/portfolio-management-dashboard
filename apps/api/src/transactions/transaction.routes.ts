@@ -6,6 +6,7 @@ import {
 } from '../middleware/validate-request';
 import { TransactionController } from './transaction.controller';
 import { transactionSchema } from './transaction.validation';
+import { transactionQuerySchema } from './transaction-query.validation';
 
 export const transactionRouter = Router();
 
@@ -13,7 +14,13 @@ const controller = new TransactionController();
 
 transactionRouter.use(authMiddleware);
 
-transactionRouter.get('/', controller.findAll);
+transactionRouter.get(
+  '/',
+  validateRequest({
+    query: transactionQuerySchema,
+  }),
+  controller.findAll
+);
 transactionRouter.get('/:id', controller.findById);
 transactionRouter.post(
   '/',

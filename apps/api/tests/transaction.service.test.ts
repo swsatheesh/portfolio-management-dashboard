@@ -6,6 +6,7 @@ import {
 } from '../src/entities/transaction.entity';
 import { TransactionService } from '../src/transactions/transaction.service';
 import { NotFoundError } from '../src/errors/api-error';
+import { createMockQueryBuilder } from './mocks/query-builder.mock';
 
 type MockRepository<T> = {
   find: jest.Mock;
@@ -13,6 +14,7 @@ type MockRepository<T> = {
   create: jest.Mock;
   save: jest.Mock;
   remove: jest.Mock;
+  createQueryBuilder: jest.Mock;
 };
 
 describe('TransactionService', () => {
@@ -27,6 +29,7 @@ describe('TransactionService', () => {
       create: jest.fn(),
       save: jest.fn(),
       remove: jest.fn(),
+      createQueryBuilder: jest.fn()
     };
 
     investmentRepository = {
@@ -40,38 +43,96 @@ describe('TransactionService', () => {
     );
   });
 
-  it('lists transactions for a user', async () => {
-    transactionRepository.find.mockResolvedValue([
-      {
-        id: 'transaction-1',
-        type: TransactionType.BUY,
-      },
-    ]);
+  describe('TransactionService - pagination', () => {
+    it('returns paginated transactions for the user', async () => {
+      const queryBuilder = createMockQueryBuilder<TransactionEntity>();
 
-    const result = await service.findAll('user-1');
-
-    expect(transactionRepository.find).toHaveBeenCalledWith({
-      relations: {
-        investment: true,
-      },
-      where: {
-        investment: {
-          user: {
-            id: 'user-1',
-          },
+      const transactions = [
+        {
+          id: "transaction-1",
+          type: "BUY",
         },
-      },
-      order: {
-        transactionDate: 'DESC',
-      },
+      ] as TransactionEntity[];
+
+      queryBuilder.getManyAndCount.mockResolvedValue([transactions, 21]);
+
+      transactionRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
+
+      const result = await service.findAll(
+        'user-1',
+        {
+          page: 1,
+          limit: 10,
+          sortBy: 'transactionDate',
+          sortOrder: 'DESC',
+        }
+      );
+
+      expect(transactionRepository.createQueryBuilder).toHaveBeenCalledWith("transaction");
+
+      expect(queryBuilder.where).toHaveBeenCalledWith("user.id = :userId", {
+        userId: "user-1",
+      });
+
+      expect(result.pagination).toEqual({
+        page: 1,
+        limit: 10,
+        total: 21,
+        totalPages: 3,
+        hasNextPage: true,
+        hasPreviousPage: false,
+      });
+
+      expect(result.data).toEqual(transactions);
     });
 
-    expect(result).toEqual([
-      {
-        id: 'transaction-1',
-        type: TransactionType.BUY,
-      },
-    ]);
+    it('applies transaction filters', async () => {
+      const queryBuilder = createMockQueryBuilder<TransactionEntity>();
+
+      queryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
+
+      transactionRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
+
+      await service.findAll('user-1', {
+        page: 1,
+        limit: 10,
+        type: 'BUY',
+        investmentId: '72be15f0-a9f2-49ba-a8d6-68fce45a8eba',
+        dateFrom: '2026-01-01',
+        dateTo: '2026-07-10',
+        search: 'AAPL',
+        sortBy: 'transactionDate',
+        sortOrder: 'DESC',
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        "transaction.type = :type",
+        {
+          type: "BUY",
+        },
+      );
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'investment.id = :investmentId',
+        {
+          investmentId: '72be15f0-a9f2-49ba-a8d6-68fce45a8eba',
+        }
+      );
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'transaction.transactionDate >= :dateFrom',
+        {
+          dateFrom: '2026-01-01',
+        }
+      );
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'transaction.transactionDate <= :dateTo',
+        {
+          dateTo: '2026-07-10',
+        }
+      );
+    });
   });
 
   it('finds a transaction by id for a user', async () => {

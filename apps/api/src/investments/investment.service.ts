@@ -2,7 +2,10 @@ import { Repository } from 'typeorm';
 import { InvestmentEntity } from '../entities/investment.entity';
 import { UserEntity } from '../entities/user.entity';
 import { CreateInvestmentDto, UpdateInvestmentDto } from './dto/investment.dto';
+import { InvestmentQuery } from './investment-query.validation';
+
 import { NotFoundError } from '../errors/api-error';
+import { createPaginatedResponse, PaginatedResponse } from '../common/pagination';
 
 export class InvestmentService {
   constructor(
@@ -10,11 +13,66 @@ export class InvestmentService {
     private readonly userRepository: Repository<UserEntity>
   ) {}
 
-  async findAll(userId: string) {
-    return await this.investmentRepository.find({
-      where: { user: { id: userId } },
-      order: { createdAt: 'DESC' },
-    });
+  async findAll(userId: string, query: InvestmentQuery): Promise<PaginatedResponse<InvestmentEntity>> {
+    const {
+      page,
+      limit,
+      search,
+      assetType,
+      sortBy,
+      sortOrder,
+    } = query;
+
+    const queryBuilder = this.investmentRepository
+      .createQueryBuilder('investment')
+      .innerJoin('investment.user', 'user')
+      .where('user.id = :userId', { userId });
+    
+    if (search) {
+      queryBuilder.andWhere(
+        `(
+          LOWER(investment.name) LIKE LOWER(:search)
+          OR LOWER(investment.symbol) LIKE LOWER(:search)
+        )`,
+        {
+          search: `%${search}%`,
+        }
+      );
+    }
+
+    if (assetType) {
+      queryBuilder.andWhere('investment.assetType = :assetType', {
+        assetType,
+      });
+    }
+
+    const sortColumns: Record<
+      InvestmentQuery['sortBy'],
+      string
+    > = {
+      createdAt: 'investment.createdAt',
+      updatedAt: 'investment.updatedAt',
+      name: 'investment.name',
+      symbol: 'investment.symbol',
+      assetType: 'investment.assetType',
+      quantity: 'investment.quantity',
+      purchasePrice: 'investment.purchasePrice',
+      currentPrice: 'investment.currentPrice',
+    };
+
+    queryBuilder
+      .orderBy(sortColumns[sortBy], sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [investments, total] = await queryBuilder.getManyAndCount();
+
+    return createPaginatedResponse(
+      investments,
+      total,
+      page,
+      limit
+    );
   }
 
   async findById(userId: string, investmentId: string) {

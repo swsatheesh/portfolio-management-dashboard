@@ -18,7 +18,17 @@ Content-Type: application/json
 GET {{baseUrl}}/api/investments
 Authorization: Bearer {{token}}
 
-###
+### Limit list Investments
+GET {{baseUrl}}/api/investments?page=1&limit=5
+Authorization: Bearer {{token}}
+
+### Search Investments
+GET {{baseUrl}}/api/investments?search=apple&assetType=STOCK
+Authorization: Bearer {{token}}
+
+### Sort by current price
+GET {{baseUrl}}/api/investments?sortBy=currentPrice&sortOrder=DESC
+Authorization: Bearer {{token}}
 
 ### Create Investment
 # @name createInvestment

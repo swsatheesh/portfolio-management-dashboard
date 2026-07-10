@@ -9,6 +9,7 @@ import {
   investmentSchema,
   updateInvestmentSchema,
 } from './investment.validation';
+import { investmentQuerySchema } from './investment-query.validation';
 
 export const investmentRouter = Router();
 
@@ -18,7 +19,13 @@ investmentRouter.use(authMiddleware);
 
 investmentRouter.get('/symbols/:symbol?', investmentController.fetchSymbol);
 
-investmentRouter.get('/', investmentController.findAll);
+investmentRouter.get(
+  '/',
+  validateRequest({
+    query: investmentQuerySchema,
+  }),
+  investmentController.findAll
+);
 investmentRouter.get('/:id', investmentController.findById);
 investmentRouter.post(
   '/',

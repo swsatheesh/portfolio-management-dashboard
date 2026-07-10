@@ -1,8 +1,9 @@
 import { Repository } from 'typeorm';
-import { InvestmentEntity } from '../../src/entities/investment.entity';
+import { AssetType, InvestmentEntity } from '../../src/entities/investment.entity';
 import { UserEntity } from '../../src/entities/user.entity';
 import { NotFoundError } from '../../src/errors/api-error';
 import { InvestmentService } from '../../src/investments/investment.service';
+import { createMockQueryBuilder } from '../mocks/query-builder.mock';
 
 type MockRepository<T> = {
   find: jest.Mock;
@@ -10,6 +11,7 @@ type MockRepository<T> = {
   create: jest.Mock;
   save: jest.Mock;
   remove: jest.Mock;
+  createQueryBuilder: jest.Mock;
 };
 
 describe('InvestmentService - ownership checks', () => {
@@ -24,6 +26,7 @@ describe('InvestmentService - ownership checks', () => {
       create: jest.fn(),
       save: jest.fn(),
       remove: jest.fn(),
+      createQueryBuilder: jest.fn()
     };
 
     userRepository = {
@@ -36,31 +39,90 @@ describe('InvestmentService - ownership checks', () => {
     );
   });
 
-  describe('findAll', () => {
-    it('returns only investments owned by the authenticated user', async () => {
+  describe('InvestmentService - pagination', () => {
+    it('returns paginated investments owned by the user', async () => {
+      const queryBuilder = createMockQueryBuilder<InvestmentEntity>();
+
       const investments = [
         {
           id: 'investment-1',
           symbol: 'AAPL',
         },
+        {
+          id: 'investment-2',
+          symbol: 'MSFT',
+        },
       ] as InvestmentEntity[];
 
-      investmentRepository.find.mockResolvedValue(investments);
+      queryBuilder.getManyAndCount.mockResolvedValue([investments, 12]);
 
-      const result = await service.findAll('user-1');
+      investmentRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
 
-      expect(investmentRepository.find).toHaveBeenCalledWith({
-        where: {
-          user: {
-            id: 'user-1',
-          },
-        },
-        order: {
-          createdAt: 'DESC',
+      const result = await service.findAll(
+        'user-1',
+        {
+          page: 2,
+          limit: 5,
+          sortBy: 'createdAt',
+          sortOrder: 'DESC',
+        }
+      );
+
+      expect(investmentRepository.createQueryBuilder).toHaveBeenCalledWith('investment');
+
+      expect(queryBuilder.where).toHaveBeenCalledWith('user.id = :userId', { userId: 'user-1' });
+
+      expect(queryBuilder.skip).toHaveBeenCalledWith(5);
+
+      expect(queryBuilder.take).toHaveBeenCalledWith(5);
+
+      expect(result).toEqual({
+        data: investments,
+        pagination: {
+          page: 2,
+          limit: 5,
+          total: 12,
+          totalPages: 3,
+          hasNextPage: true,
+          hasPreviousPage: true,
         },
       });
+    });
 
-      expect(result).toEqual(investments);
+    it('filters investments by search and asset type', async () => {
+      const queryBuilder = createMockQueryBuilder<InvestmentEntity>();
+
+      queryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
+
+      investmentRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
+
+      await service.findAll('user-1', {
+        page: 1,
+        limit: 10,
+        search: 'apple',
+        assetType: AssetType.STOCK,
+        sortBy: 'name',
+        sortOrder: 'ASC',
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining("LOWER(investment.name)"),
+        {
+          search: "%apple%",
+        },
+      );
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'investment.assetType = :assetType',
+        {
+          assetType: AssetType.STOCK,
+        }
+      );
+
+      expect(queryBuilder.orderBy).toHaveBeenCalledWith(
+        'investment.name',
+        'ASC'
+      );
     });
   });
 

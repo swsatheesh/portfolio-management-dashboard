@@ -4,10 +4,11 @@ import { InvestmentEntity } from '../entities/investment.entity';
 import { UserEntity } from '../entities/user.entity';
 import { InvestmentService } from './investment.service';
 import { getParamAsString } from '../common/utils/param.util';
-import stocks from '../seeds/stocks.json';
+import { investmentSeedData } from '../seeds/investment-seed.data';
 
 import { asyncHandler } from '../middleware/async-handler';
 import { NotFoundError } from '../errors/api-error';
+import { InvestmentQuery } from './investment-query.validation';
 
 export class InvestmentController {
   private readonly investmentService: InvestmentService;
@@ -25,7 +26,7 @@ export class InvestmentController {
     const symbol = req.params.symbol;
 
     if (symbol) {
-      const stockDetails = stocks.stocks.find(
+      const stockDetails = investmentSeedData.find(
         stock => stock.symbol.toUpperCase() === symbol
       );
 
@@ -36,11 +37,17 @@ export class InvestmentController {
       return res.status(200).json(stockDetails);
     }
 
-    return res.status(200).json(stocks.stocks);
+    return res.status(200).json(investmentSeedData);
   }
 
   findAll = asyncHandler(async (req: Request, res: Response) => {
-    const investments = await this.investmentService.findAll(req.user!.id);
+    const query = res.locals.validated.query as InvestmentQuery;
+
+    const investments = await this.investmentService.findAll(
+      req.user!.id,
+      query
+    );
+    
     return res.status(200).json(investments);
   });
 

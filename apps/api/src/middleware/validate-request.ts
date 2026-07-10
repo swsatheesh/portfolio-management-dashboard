@@ -7,19 +7,37 @@ type RequestSchemas = {
   query?: z.ZodType;
 };
 
+export interface ValidatedRequestData {
+  body?: unknown;
+  params?: unknown;
+  query?: unknown;
+}
+
 export function validateRequest(schemas: RequestSchemas) {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+
+    const validated: ValidatedRequestData = {};
+
     if (schemas.body) {
-      req.body = schemas.body.parse(req.body);
+      const body = schemas.body.parse(req.body);
+      req.body = body;
+      validated.body = body;
     }
 
     if (schemas.params) {
-      req.params = schemas.params.parse(req.params) as Record<string, string>;
+      const params = schemas.params.parse(req.params);
+
+      Object.assign(req.params, params);
+      validated.params = params;
     }
 
     if (schemas.query) {
-      req.query = schemas.query.parse(req.query) as typeof req.query;
+      validated.query = schemas.query.parse(
+        req.query
+      );
     }
+
+    res.locals.validated = validated;
 
     next();
   };

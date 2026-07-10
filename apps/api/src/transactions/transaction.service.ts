@@ -6,6 +6,8 @@ import {
   UpdateTransactionDto,
 } from './dto/transaction.dto';
 import { BadRequestError, NotFoundError } from '../errors/api-error';
+import { TransactionQuery } from './transaction-query.validation';
+import { createPaginatedResponse } from '../common/pagination';
 
 export class TransactionService {
   constructor(
@@ -13,22 +15,102 @@ export class TransactionService {
     private readonly investmentRepository: Repository<InvestmentEntity>
   ) {}
 
-  async findAll(userId: string) {
-    return this.transactionRepository.find({
-      relations: {
-        investment: true,
-      },
-      where: {
-        investment: {
-          user: {
-            id: userId,
-          },
-        },
-      },
-      order: {
-        transactionDate: 'DESC',
-      },
-    });
+  async findAll(userId: string, query: TransactionQuery) {
+
+    const {
+      page,
+      limit,
+      type,
+      investmentId,
+      dateFrom,
+      dateTo,
+      search,
+      sortBy,
+      sortOrder,
+    } = query;
+
+    const queryBuilder = this.transactionRepository
+      .createQueryBuilder('transaction')
+      .innerJoinAndSelect('transaction.investment', 'investment')
+      .innerJoin('investment.user', 'user')
+      .where('user.id = :userId', {
+        userId,
+      });
+
+    if (type) {
+      queryBuilder.andWhere(
+        'transaction.type = :type',
+        {
+          type,
+        }
+      );
+    }
+
+    if (investmentId) {
+      queryBuilder.andWhere(
+        'investment.id = :investmentId',
+        {
+          investmentId,
+        }
+      );
+    }
+
+    if (dateFrom) {
+      queryBuilder.andWhere(
+        'transaction.transactionDate >= :dateFrom',
+        {
+          dateFrom,
+        }
+      );
+    }
+
+    if (dateTo) {
+      queryBuilder.andWhere(
+        'transaction.transactionDate <= :dateTo',
+        {
+          dateTo,
+        }
+      );
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        `(
+          LOWER(investment.name) LIKE LOWER(:search)
+          OR LOWER(investment.symbol) LIKE LOWER(:search)
+        )`,
+        {
+          search: `%${search}%`,
+        }
+      );
+    }
+
+    const sortColumns: Record<
+      TransactionQuery['sortBy'],
+      string
+    > = {
+      createdAt: 'transaction.createdAt',
+      transactionDate: 'transaction.transactionDate',
+      type: 'transaction.type',
+      quantity: 'transaction.quantity',
+      price: 'transaction.price',
+    };
+
+    queryBuilder
+      .orderBy(sortColumns[sortBy], sortOrder)
+      .addOrderBy('transaction.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [transactions, total] =
+      await queryBuilder.getManyAndCount();
+
+    return createPaginatedResponse(
+      transactions,
+      total,
+      page,
+      limit
+    );
   }
 
   async findById(userId: string, transactionId: string) {
