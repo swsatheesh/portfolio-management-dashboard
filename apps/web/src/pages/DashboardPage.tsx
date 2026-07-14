@@ -3,7 +3,6 @@ import { apiRequest } from '../lib/api';
 import { AssetAllocationChart } from '../components/AssetAllocationChart';
 import { SummaryCard } from '../components/SummaryCard';
 import { PortfolioSummary } from '../types/portfolio';
-import { AppLayout } from '../components/layout/AppLayout';
 
 export function DashboardPage() {
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
@@ -27,24 +26,20 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <AppLayout>
-        <p>Loading dashboard...</p>
-      </AppLayout>
+      <p>Loading dashboard...</p>
     );
   }
 
   if (error || !summary) {
     return (
-      <AppLayout>
-        <p role="alert">{error || 'Portfolio summary unavailable'}</p>
-      </AppLayout>
+      <p role="alert">{error || 'Portfolio summary unavailable'}</p>
     );
   }
 
   const gainTone = summary.totalGainLoss >= 0 ? 'positive' : 'negative';
 
   return (
-    <AppLayout>
+    <>
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">Portfolio Overview</p>
@@ -77,7 +72,7 @@ export function DashboardPage() {
       </section>
 
       <AssetAllocationChart data={summary.assetAllocation} />
-    </AppLayout>
+    </>
   );
 }
 

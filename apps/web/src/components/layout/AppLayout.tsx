@@ -1,11 +1,14 @@
-import { ReactNode } from 'react';
+import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout() {
   return (
     <div className="app-layout">
-      <Navbar isAuthenticated />
-      <main className="app-shell">{children}</main>
+      <Navbar />
+
+      <main className="app-layout__content">
+        <Outlet />
+      </main>
     </div>
   );
 }

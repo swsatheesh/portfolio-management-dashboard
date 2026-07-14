@@ -15,4 +15,4 @@ authRouter.post(
   validateRequest({ body: loginSchema }),
   authController.login
 );
-authRouter.get('/profile', authMiddleware, profileController.getProfile);
+authRouter.get('/me', authMiddleware, profileController.getCurrentUser);

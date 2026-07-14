@@ -1,9 +1,21 @@
 import { NextFunction, Request, Response } from 'express';
 
-export function asyncHandler(
-  handler: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
+type AsyncRequestHandler<TRequest extends Request = Request> = (
+  req: TRequest,
+  res: Response,
+  next: NextFunction
+) => Promise<unknown>;
+
+export function asyncHandler<TRequest extends Request = Request>(
+  handler: AsyncRequestHandler<TRequest>
 ) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(handler(req, res, next)).catch(next);
+  return (
+    req: TRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    Promise.resolve(
+      handler(req, res, next)
+    ).catch(next);
   };
 }

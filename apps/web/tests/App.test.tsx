@@ -1,10 +1,20 @@
 import { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
-import { App } from '../src/App';
+import { MemoryRouter } from 'react-router';
+import App from '../src/App';
 import { ThemeProvider } from '../src/context/ThemeContext';
+import { AuthProvider } from '../src/context/AuthContext';
 
 function renderWithProviders(children: ReactNode) {
-  return render(<ThemeProvider>{children}</ThemeProvider>);
+  return render(
+    <MemoryRouter>
+      <AuthProvider> {/* 👈 Nest inside the router */}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </AuthProvider>
+    </MemoryRouter>
+  );
 }
 
 describe('App', () => {
