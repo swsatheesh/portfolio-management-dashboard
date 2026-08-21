@@ -1,11 +1,10 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { apiRequest } from '../lib/api';
+import { apiRequest } from '../services/api';
 import {
   AssetType,
   CreateInvestmentInput,
   Investment,
 } from '../types/investment';
-import { AppLayout } from '../components/layout/AppLayout';
 
 const assetTypes: AssetType[] = ['STOCK', 'BOND', 'MUTUAL_FUND', 'ETF', 'CASH'];
 
@@ -186,7 +185,7 @@ export function InvestmentsPage() {
   }
 
   return (
-    <AppLayout>
+    <>
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">Portfolio Holdings</p>
@@ -387,7 +386,7 @@ export function InvestmentsPage() {
           </div>
         )}
       </section>
-    </AppLayout>
+    </>
   );
 }
 

@@ -14,9 +14,6 @@ describe('AuthService', () => {
   let authService: AuthService;
 
   beforeEach(() => {
-    process.env.JWT_SECRET = 'test-secret';
-    process.env.JWT_EXPIRES_IN = '1d';
-
     userRepository = {
       findOne: jest.fn(),
     };
@@ -100,7 +97,14 @@ describe('AuthService', () => {
       fullName: 'Admin User',
     });
 
-    const decoded = jwt.verify(token, 'test-secret') as jwt.JwtPayload;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!,
+      {
+        issuer: 'portfolio-management-api',
+        audience: 'portfolio-management-web',
+      }
+    ) as jwt.JwtPayload;
 
     expect(decoded.sub).toBe('user-1');
     expect(decoded.email).toBe('admin@test.com');

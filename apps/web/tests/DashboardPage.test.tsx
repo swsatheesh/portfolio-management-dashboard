@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from '../src/pages/DashboardPage';
 import { ThemeProvider } from '../src/context/ThemeContext';
-import { apiRequest } from '../src/lib/api';
+import { apiRequest } from '../src/services/api';
 
-jest.mock('../src/lib/api', () => ({
+jest.mock('../src/services/api', () => ({
   apiRequest: jest.fn(),
 }));
 
@@ -23,7 +23,7 @@ function renderDashboardPage() {
 describe('DashboardPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorage.setItem('accessToken', 'test-token');
+    localStorage.setItem('portfolio_access_token', 'test-token');
   });
 
   it('renders portfolio summary metrics', async () => {

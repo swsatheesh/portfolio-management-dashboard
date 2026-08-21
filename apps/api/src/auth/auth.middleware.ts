@@ -27,10 +27,14 @@ export function authMiddleware(
   try {
     const payload = jwt.verify(
       token,
-      appConfig.jwtSecret
+      appConfig.jwtSecret,
+      {
+        issuer: 'portfolio-management-api',
+        audience: 'portfolio-management-web',
+      }
     ) as AccessTokenPayload;
 
-    if (!payload.sub || !payload.email) {
+    if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
       return next(new UnauthorizedError('Invalid authentication token'));
     }
 
@@ -40,7 +44,15 @@ export function authMiddleware(
     };
 
     return next();
-  } catch {
-    return next(new UnauthorizedError('Invalid or expired authentication token'));
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return next(
+        new UnauthorizedError(
+          'Authentication token has expired'
+        )
+      );
+    }
+
+    return next(new UnauthorizedError('Invalid authentication token'));
   }
 }

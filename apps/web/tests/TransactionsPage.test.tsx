@@ -1,16 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransactionsPage } from '../src/pages/TransactionsPage';
-import { apiRequest } from '../src/lib/api';
+import { apiRequest } from '../src/services/api';
 
-jest.mock('../src/lib/api', () => ({
+jest.mock('../src/services/api', () => ({
   apiRequest: jest.fn(),
-}));
-
-jest.mock('../src/components/layout/AppLayout', () => ({
-  AppLayout: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
 }));
 
 const mockedApiRequest = apiRequest as jest.Mock;

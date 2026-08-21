@@ -33,10 +33,20 @@ export function createApp() {
 
   app.use(
     rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: appConfig.isProduction ? 100 : 1000,
-      standardHeaders: true,
+      windowMs: appConfig.globalRateLimit.windowMs,
+      limit: appConfig.globalRateLimit.max,
+      standardHeaders: 'draft-7',
       legacyHeaders: false,
+
+      handler: (_req, res) => {
+        return res.status(429).json({
+          error: {
+            code: 'TOO_MANY_REQUESTS',
+            message:
+              'Too many requests. Please try again later.',
+          },
+        });
+      },
     })
   );
 

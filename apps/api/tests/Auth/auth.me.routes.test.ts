@@ -53,10 +53,12 @@ describe('GET /api/auth/me', () => {
       {
         email: 'admin@test.com',
       },
-      'test-secret',
+      process.env.JWT_SECRET!,
       {
         subject: 'user-1',
         expiresIn: '1h',
+        issuer: 'portfolio-management-api',
+        audience: 'portfolio-management-web',
       }
     );
 
@@ -91,7 +93,7 @@ describe('GET /api/auth/me', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.error.message).toBe(
-      'Invalid or expired authentication token'
+      'Invalid authentication token'
     );
   });
 
@@ -100,10 +102,12 @@ describe('GET /api/auth/me', () => {
       {
         email: 'admin@test.com',
       },
-      'test-secret',
+      process.env.JWT_SECRET!,
       {
         subject: 'user-1',
         expiresIn: -1,
+        issuer: 'portfolio-management-api',
+        audience: 'portfolio-management-web',
       }
     );
 

@@ -1,10 +1,10 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiRequest } from '../lib/api';
-import { LoginResponse } from '../types/auth';
+import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('admin@test.com');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState('');
@@ -14,12 +14,7 @@ export function LoginPage() {
     setError('');
 
     try {
-      const result = await apiRequest<LoginResponse>('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-
-      localStorage.setItem('accessToken', result.accessToken);
+      await login(email, password);
       navigate('/dashboard');
     } catch {
       setError('Invalid email or password');

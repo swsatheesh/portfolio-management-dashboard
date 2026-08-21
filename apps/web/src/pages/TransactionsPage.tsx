@@ -1,12 +1,11 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { apiRequest } from '../lib/api';
+import { apiRequest } from '../services/api';
 import { Investment } from '../types/investment';
 import {
   CreateTransactionInput,
   Transaction,
   TransactionType,
 } from '../types/transaction';
-import { AppLayout } from '../components/layout/AppLayout';
 import { formatDate } from '../utils/date';
 
 type TransactionValidationErrors = Partial<
@@ -152,15 +151,11 @@ export function TransactionsPage() {
   }
 
   if (isLoading) {
-    return (
-      <AppLayout>
-        <p>Loading transactions...</p>
-      </AppLayout>
-    );
+    return <p>Loading transactions...</p>;
   }
 
   return (
-    <AppLayout>
+    <>
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">Portfolio Activity</p>
@@ -321,7 +316,7 @@ export function TransactionsPage() {
           </div>
         )}
       </section>
-    </AppLayout>
+    </>
   );
 }
 

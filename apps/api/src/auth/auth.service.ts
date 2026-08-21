@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
-import { getAuthConfig } from '../config/auth.config';
+import { appConfig } from '../config/auth.config';
 import { UserEntity } from '../entities/user.entity';
 import { AuthUser, JwtPayload } from './auth.types';
 import { LoginDto } from './dto/login.dto';
@@ -11,8 +11,9 @@ export class AuthService {
   constructor(private readonly userRepository: Repository<UserEntity>) {}
 
   async validateUser(dto: LoginDto): Promise<AuthUser | null> {
+    const normalizedEmail = dto.email.trim().toLowerCase();
     const user = await this.userRepository.findOne({
-      where: { email: dto.email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
@@ -33,15 +34,17 @@ export class AuthService {
   }
 
   generateToken(user: AuthUser): string {
-    const { jwtSecret, jwtExpiresIn } = getAuthConfig();
+    const { jwtSecret, jwtExpiresIn } = appConfig;
 
     const payload: JwtPayload = {
-      sub: user.id,
       email: user.email,
     };
 
     const options: SignOptions = {
+      subject: user.id,
       expiresIn: jwtExpiresIn as SignOptions['expiresIn'],
+      issuer: 'portfolio-management-api',
+      audience: 'portfolio-management-web',
     };
 
     return jwt.sign(payload, jwtSecret, options);
@@ -52,7 +55,13 @@ export class AuthService {
 
     return {
       accessToken: this.generateToken(user),
-      user,
+      tokenType: 'Bearer',
+      expiresIn: appConfig.jwtExpiresIn,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+      },
     };
   }
 }

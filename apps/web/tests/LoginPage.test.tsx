@@ -1,12 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { LoginPage } from '../src/pages/LoginPage';
+import { AuthProvider } from '../src/context/AuthContext';
 
 describe('LoginPage', () => {
   it('renders login form', () => {
     render(
       <BrowserRouter>
-        <LoginPage />
+        <AuthProvider>
+          <LoginPage />
+        </AuthProvider>
       </BrowserRouter>
     );
 

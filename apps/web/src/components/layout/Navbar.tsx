@@ -1,16 +1,14 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
-interface NavbarProps {
-  isAuthenticated?: boolean;
-}
-
-export function Navbar({ isAuthenticated = false }: NavbarProps) {
+export function Navbar() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, logout: authLogout } = useAuth();
 
   function logout() {
-    localStorage.removeItem('accessToken');
+    authLogout();
     navigate('/');
   }
 

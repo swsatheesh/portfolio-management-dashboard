@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiRequest } from '../lib/api';
+import { apiRequest } from '../services/api';
 import { AssetAllocationChart } from '../components/AssetAllocationChart';
 import { SummaryCard } from '../components/SummaryCard';
 import { PortfolioSummary } from '../types/portfolio';
